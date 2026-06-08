@@ -64,13 +64,17 @@ export function decode(text: string, flavor: Flavor): string {
   switch (flavor) {
     case 'html': {
       let s = text;
-      // Named entities first (longest first to avoid partial matches).
+      // Named entities (except &amp;) first, so an encoded literal entity such
+      // as "&amp;lt;" is not prematurely turned into "&lt;" and then "<".
       for (const [name, char] of Object.entries(HTML_NAMED)) {
+        if (name === '&amp;') continue;
         s = s.split(name).join(char);
       }
       // Numeric: &#123; and &#xAB;.
       s = s.replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(parseInt(n, 10)));
       s = s.replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)));
+      // &amp; must be decoded last so it does not unwrap other entities.
+      s = s.split('&amp;').join('&');
       return s;
     }
     case 'url':

@@ -45,3 +45,26 @@ test('round trip preserves text (html)', () => {
   const s = '<b>hello & "world"</b>';
   assert.equal(decode(encode(s, 'html'), 'html'), s);
 });
+
+test('html: round trip preserves literal entity text', () => {
+  // Regression: "&lt;" as literal text must survive encode→decode and not
+  // collapse into "<" (the &amp; entity must be decoded last).
+  const s = '&lt;b&gt; & &amp; tags';
+  assert.equal(decode(encode(s, 'html'), 'html'), s);
+});
+
+test('html: decodes &amp; last (no over-unwrapping)', () => {
+  assert.equal(decode('&amp;lt;', 'html'), '&lt;');
+  assert.equal(decode('&amp;amp;', 'html'), '&amp;');
+});
+
+test('html: round trips non-BMP characters (emoji)', () => {
+  const s = 'hi 😀!';
+  assert.equal(encode(s, 'html'), 'hi &#128512;!');
+  assert.equal(decode(encode(s, 'html'), 'html'), s);
+});
+
+test('unicode: round trips non-BMP characters (emoji)', () => {
+  const s = '😀';
+  assert.equal(decode(encode(s, 'unicode'), 'unicode'), s);
+});
